@@ -1,0 +1,85 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+import xlsx from 'xlsx';
+
+// Obtener la ruta del archivo actual
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Cargar el archivo Excel
+const rutaArchivo = path.resolve(__dirname, 'CORRERIA.xlsx'); // Asegúrate de que el archivo esté en la misma carpeta
+const workbook = xlsx.readFile(rutaArchivo);
+const sheetName = workbook.SheetNames[0]; // Obtener el nombre de la primera hoja
+const worksheet = workbook.Sheets[sheetName];
+
+// Convertir los datos a JSON
+const data = xlsx.utils.sheet_to_json(worksheet);
+
+// Función para procesar los datos
+function procesarDatos(data) {
+    // Agrupar por TPL y calcular ciclo mínimo y máximo
+    const agrupadosPorTPL = data.reduce((acc, row) => {
+        const { TPL, Ciclo } = row;
+
+        if (!acc[TPL]) {
+            acc[TPL] = { minCiclo: Ciclo, maxCiclo: Ciclo };
+        } else {
+            acc[TPL].minCiclo = Math.min(acc[TPL].minCiclo, Ciclo);
+            acc[TPL].maxCiclo = Math.max(acc[TPL].maxCiclo, Ciclo);
+        }
+
+        return acc;
+    }, {});
+
+    // Procesar cada fila
+    return data.map(row => {
+        const { Ciclo, TPL, Tarea } = row;
+
+        // Obtener el rango de ciclos para el TPL actual
+        const { minCiclo, maxCiclo } = agrupadosPorTPL[TPL];
+
+        // Determinar el código de tarea
+        let tareaCodigo;
+        switch (Tarea) {
+            case 'RECONEXIÓN':
+                tareaCodigo = '03';
+                break;
+            case 'SUSPENSIÓN':
+                tareaCodigo = '02';
+                break;
+            case 'DESVIACIÓN SIGNIFICATIVA':
+                tareaCodigo = '01';
+                break;
+            default:
+                tareaCodigo = '00';
+        }
+
+        // Formatear el TPL para obtener solo los números
+        const tplNumero = TPL.match(/\d+/)[0];
+
+        // Crear el nombre de la correría utilizando el ciclo mínimo y máximo
+        const nombreCorreria = `SCR CL ${minCiclo}/${maxCiclo} ${tplNumero}`;
+
+        // Devolver la fila con las nuevas columnas
+        return {
+            ...row,
+            'nombre correria': nombreCorreria,
+            'Tarea-codigo': tareaCodigo
+        };
+    });
+}
+
+const datosProcesados = procesarDatos(data);
+
+// Crear un nuevo libro de trabajo y una hoja
+const newWorkbook = xlsx.utils.book_new();
+const newWorksheet = xlsx.utils.json_to_sheet(datosProcesados);
+
+// Añadir la hoja al libro de trabajo
+xlsx.utils.book_append_sheet(newWorkbook, newWorksheet, 'Datos Procesados');
+
+// Guardar el archivo Excel
+const nuevaRutaArchivo = path.resolve(__dirname, 'Datos_Procesados.xlsx');
+xlsx.writeFile(newWorkbook, nuevaRutaArchivo);
+
+console.log('Archivo procesado y guardado como Datos_Procesados.xlsx');

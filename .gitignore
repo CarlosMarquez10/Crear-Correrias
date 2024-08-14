@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Directory for environment variable files
+.env
+
+# Ignore uploaded files in file directory
+src/file/Datos_Procesados.xlsx
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor specific files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Ignore test files
+test/
+
+# Ignore compiled output
+dist/
+build/
+
+# Ignore coverage files
+coverage/
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore package-lock.json or yarn.lock (if you want)
+package-lock.json
+yarn.lock
+
+# Ignore your excel data (if you don't want to version control it)
+src/data/CORRERIA.xlsx
